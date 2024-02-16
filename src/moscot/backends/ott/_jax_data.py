@@ -17,6 +17,7 @@ class JaxSampler:
         distributions: List[jnp.ndarray],  # type: ignore[name-defined]
         policy_pairs: List[Tuple[Any, Any]],
         conditional: bool = False,
+        embedding_data: Dict[str, Dict[str, jnp.ndarray]] = MappingProxyType({}),
         a: List[jnp.ndarray] = None,  # type: ignore[name-defined]
         b: List[jnp.ndarray] = None,  # type: ignore[name-defined]
         sample_to_idx: Dict[int, Any] = MappingProxyType({}),
@@ -31,7 +32,15 @@ class JaxSampler:
         self._distributions = distributions
         self._batch_size = batch_size
         self._policy_pairs = policy_pairs
-        self._conditions = jnp.array([pp[0] for pp in policy_pairs], dtype=float)[:, None] if conditional else None
+        # self._conditions = jnp.array([pp[1] for pp in policy_pairs])[:, None] if conditional else None
+        self._conditions = jnp.array(
+            [
+                jnp.hstack(
+                    [embedding_data[pp[1].split("_")[0]], embedding_data[pp[1].split("_")[1]]]
+                ) for pp in policy_pairs
+            ],
+            dtype=float
+        ) if conditional else None
         if not len(sample_to_idx):
             if len(self.policy_pairs) > 1:
                 raise ValueError("If `policy_pairs` contains more than 1 value, `sample_to_idx` is required.")

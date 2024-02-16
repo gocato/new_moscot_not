@@ -837,10 +837,12 @@ class CondOTProblem(BaseProblem):  # TODO(@MUCDK) check generic types, save and 
         self._solution = None
 
         self._inner_policy = create_policy(policy, adata=self.adata, key=policy_key)
-        self._sample_pairs = list(self._inner_policy()._graph)
+        reference = kwargs.pop("reference", None)
+        subset = kwargs.pop("subset", None)
+        self._sample_pairs = list(self._inner_policy(reference=reference, subset=subset)._graph)
 
         xy = {k[2:]: v for k, v in xy.items() if k.startswith("x_")}
-        for (src, tgt), (src_mask, tgt_mask) in self._inner_policy().create_masks().items():
+        for (src, tgt), (src_mask, tgt_mask) in self._inner_policy(reference=reference, subset=subset).create_masks().items():
             if src not in self._distributions.keys():
                 x_tagged = TaggedArray.from_adata(self.adata[src_mask], dist_key=policy_key, tag=Tag.POINT_CLOUD, **xy)
                 a = self._create_marginals(self.adata[src_mask], data=self._a, source=True, **kwargs)
